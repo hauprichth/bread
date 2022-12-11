@@ -1,6 +1,6 @@
 const router = require('express').Router()
 const Bread = require('../models/bread')
-
+const seedData = require('../models/seedData')
 //GET: get all the bread
 router.get('/',  async (req,res) => {
     const bread = await Bread.find()
@@ -15,12 +15,11 @@ router.get('/new', (req,res) => {
 })
 
 //GET: edit bread page 
-router.get('/:index/edit', (req,res) => {
-    const { index } = req.params
-    const bread = Bread[index]
+router.get('/:id/edit', async (req,res) => {
+    const { id } = req.params
+    const bread =  await Bread.findById(id)
     res.render('edit', {
-        bread,
-        index
+        bread
     })
 })
 
@@ -32,6 +31,11 @@ router.get('/:id', async (req,res) => {
     res.render('show', {
         bread,
     })
+})
+
+router.get('/data/seed', async (req,res) =>{
+    await Bread.insertMany(seedData)
+    res.redirect('/breads')
 })
 
 
@@ -50,8 +54,9 @@ router.post('/',  async (req,res) => {
 
 })
 
-router.put('/:index', (req,res) => {
-    const { index } = req.params
+
+router.put('/:id', async (req,res) => {
+    const { id } = req.params
     const { image,hasGluten} = req.body
     if(!image) req.body.image = undefined
     if (hasGluten === 'on'){
@@ -59,18 +64,14 @@ router.put('/:index', (req,res) => {
     } else {
         req.body.hasGluten = false
     }
-
-    Bread[index] = req.body
-    res.redirect(`/breads/${index}`)
+    await Bread.findByIdAndUpdate(id, req.body)
+    res.redirect(`/breads/${id}`)
 })
 
 //Delete a bread 
-router.delete('/:index', (req,res) => {
-    const { index } = req.params
-   //will go away
-    const numIndex = Number(index)
-  //will go away
-    Bread.splice(numIndex, 1)
+router.delete('/:id',  async (req,res) => {
+    const { id } = req.params
+    await Bread.findByIdAndDelete(id)
     res.status(303).redirect('/breads')
 })
 module.exports = router
